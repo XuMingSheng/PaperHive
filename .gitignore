@@ -1,0 +1,83 @@
+#############################
+#  General OS / Editor
+#############################
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+#############################
+#  Python / FastAPI
+#############################
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyc
+*.so
+*.egg
+*.egg-info/
+*.dist-info/
+
+# Virtual environments
+env/
+venv/
+venv*/ 
+
+# PyInstaller
+dist/
+build/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+*.cover
+.coverage.*
+
+# Misc
+*.log
+pytest_cache/
+.cache/
+
+#############################
+#  Node / React (Vite or CRA)
+#############################
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml
+
+# Vite build output (defaults to dist/)
+dist/
+
+# Create React App build output (if used)
+build/
+
+#############################
+#  Environment Variables
+#############################
+# Typically store secrets in .env, never commit them
+.env
+.env.*
+
+#############################
+#  Docker / Compose
+#############################
+# If you keep your build artifacts or local volumes
+# out of version control
+.dockerignore
+
+# If you don't want to commit Dockerfiles or Compose files:
+# Dockerfile
+# docker-compose.yml
+
+#############################
+#  Elasticsearch Data
+#############################
+# If you're using a local volume named "esdata" or similar
+esdata/
+es-backups/

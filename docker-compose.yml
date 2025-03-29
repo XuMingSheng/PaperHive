@@ -1,0 +1,45 @@
+version: '3.7'
+services:
+  # ----------------------------------------
+  # 1. Elasticsearch
+  # ----------------------------------------
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+    container_name: es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false  # Disable security for local dev
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - network.host=0.0.0.0
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+  # ----------------------------------------
+  # 2. Backend (FastAPI)
+  # ----------------------------------------
+  backend:
+    build: ./backend
+    container_name: fastapi_app
+    depends_on:
+      - es
+    environment:
+      # Example environment variable to reference ES inside the backend
+      - ES_HOST=http://es:9200
+    ports:
+      - "8000:8000"
+
+  # ----------------------------------------
+  # 3. Frontend (React)
+  # ----------------------------------------
+  frontend:
+    build: ./frontend
+    container_name: react_app
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"  # Expose port 80 in the container to 3000 on the host
+
+volumes:
+  esdata:
