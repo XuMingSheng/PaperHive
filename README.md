@@ -35,11 +35,11 @@ docker-compose logs
 ```
 - To view the log of the backend:
     ```bash
-    docker-compose logs react_app
+    docker-compose logs frontend
     ```
 - To view the log of the backend:
     ```bash
-    docker-compose logs fastapi_app
+    docker-compose logs backend
     ```
 - To view the log of the database:
     ```bash
