@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Test-specific Elasticsearch instance
+  es_test:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+    container_name: es_test
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9201:9200"  # Use a different port from dev
+    volumes:
+      - esdata_test:/usr/share/elasticsearch/data
+
+  # Test runner
+  test_runner:
+    build: ./backend
+    container_name: es_test_runner
+    depends_on:
+      - es_test
+    environment:
+      - ES_HOSTS=["http://es_test:9200"]
+      - ENVIRONMENT=test
+    command: sh -c "python scripts/wait_for_es.py && pytest"
+
+volumes:
+  esdata_test:

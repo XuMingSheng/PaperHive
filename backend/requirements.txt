@@ -1,3 +1,8 @@
 fastapi
+elasticsearch[async]==8.13.0
+pydantic==2.11.2
+pydantic-settings
 uvicorn
-elasticsearch
+pytest
+pytest-asyncio
+requests

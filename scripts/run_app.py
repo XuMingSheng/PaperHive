@@ -2,8 +2,5 @@
 
 import subprocess
 
-cmd = (
-    "docker-compose -f docker-compose.yml up --build -d"
-)
-
-subprocess.run(cmd, shell=True)
+build_and_run_app = "docker-compose -f docker-compose.yml up --build -d && docker image prune -f"
+subprocess.run(build_and_run_app, shell=True)

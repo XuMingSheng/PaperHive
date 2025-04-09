@@ -1,0 +1,2 @@
+from .paper_mapping import paper_index_mapping
+from .hashtag_mapping import hashtag_index_mapping

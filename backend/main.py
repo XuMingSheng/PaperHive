@@ -1,73 +1,101 @@
-# backend/main.py
+from core.config import settings
+from db.elastic import get_elasticsearch
+from schemas.v1 import paper_index_mapping, hashtag_index_mapping
+from migrations.index_migration import is_new_mappings, init_index, migrate_index
+from api.v1.routes import paper, hashtag
+
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from elasticsearch import Elasticsearch
+from contextlib import asynccontextmanager
+from typing import Dict
 
-# Elasticsearch client initialization
-# If Elasticsearch is running locally on default port: http://localhost:9200
-es = Elasticsearch("http://localhost:9200")
+async def init_or_migrate_indices(es):
+    indices = [
+        {
+            "alias": settings.es_paper_index,
+            "schema": paper_index_mapping
+        },
+        {
+            "alias": settings.es_hashtag_index,
+            "schema": hashtag_index_mapping 
+        }
+    ]
+    version = "1"
 
-app = FastAPI()
+    for index in indices:
+        alias = index["alias"]
+        schema = index["schema"]
+        await init_index(es=es, version=version, alias=alias, schema=schema)
+        await migrate_index(es=es, version=version, alias=alias, schema=schema, delete_old=True)
+    
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # --- Startup ---
+    if settings.environment == "development":
+        es = get_elasticsearch()
+        await init_or_migrate_indices(es)
 
-# Example data model for indexing documents
-class Paper(BaseModel):
-    id: str
-    title: str
-    abstract: str
-    hashtags: list[str] = []
+    yield  # Yield control to the app
+
+    # --- Shutdown ---
+    if settings.environment == "development":
+        es = get_elasticsearch()
+        if es:
+            await es.close()
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 @app.get("/")
 def root():
     return {"message": "Hello from FastAPI + Elasticsearch"}
 
-@app.post("/index-paper/")
-def index_paper(paper: Paper):
-    """Index a new paper in Elasticsearch."""
-    response = es.index(
-        index="papers",
-        id=paper.id,
-        document=paper.dict()
-    )
-    return {"result": response["result"]}
+app.include_router(paper.router, prefix="/api/v1/papers", tags=["papers"])
+app.include_router(hashtag.router, prefix="/api/v1/hashtags", tags=["hashtags"])
 
-@app.get("/search/")
-def search_papers(query: str, hashtag: str = None):
-    """
-    Search for papers by query (title/abstract).
-    Optionally filter by hashtag.
-    """
-    # Build a simple match query
-    es_query = {
-        "bool": {
-            "must": [
-                {
-                    "multi_match": {
-                        "query": query,
-                        "fields": ["title", "abstract"]
-                    }
-                }
-            ]
-        }
-    }
 
-    # If hashtag filter is provided, add a term filter
-    if hashtag:
-        es_query["bool"]["filter"] = [
-            {"term": {"hashtags.keyword": hashtag}}
-        ]
+# @app.post("/index-paper/")
+# def index_paper(paper: Paper):
+#     """Index a new paper in Elasticsearch."""
+#     response = 
+#     return {"result": response["result"]}
 
-    # Execute search
-    response = es.search(index="papers", query=es_query)
+# @app.get("/search/")
+# def search_papers(query: str, hashtag: str = None):
+#     """
+#     Search for papers by query (title/abstract).
+#     Optionally filter by hashtag.
+#     """
+#     # Build a simple match query
+#     es_query = {
+#         "bool": {
+#             "must": [
+#                 {
+#                     "multi_match": {
+#                         "query": query,
+#                         "fields": ["title", "abstract"]
+#                     }
+#                 }
+#             ]
+#         }
+#     }
 
-    # Format results
-    hits = [
-        {
-            "id": hit["_id"],
-            "title": hit["_source"]["title"],
-            "abstract": hit["_source"]["abstract"],
-            "hashtags": hit["_source"].get("hashtags", [])
-        }
-        for hit in response["hits"]["hits"]
-    ]
+#     # If hashtag filter is provided, add a term filter
+#     if hashtag:
+#         es_query["bool"]["filter"] = [
+#             {"term": {"hashtags.keyword": hashtag}}
+#         ]
 
-    return {"results": hits}
+#     # Execute search
+#     response = es.search(index="papers", query=es_query)
+
+#     # Format results
+#     hits = [
+#         {
+#             "id": hit["_id"],
+#             "title": hit["_source"]["title"],
+#             "abstract": hit["_source"]["abstract"],
+#             "hashtags": hit["_source"].get("hashtags", [])
+#         }
+#         for hit in response["hits"]["hits"]
+#     ]
+
+#     return {"results": hits}
