@@ -95,8 +95,6 @@ class PaperService:
             }
         }
 
-        logger.info(f"QUERY: {query}")
-
         result = await self.es.search(
             index=self.index,
             query=query,

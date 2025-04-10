@@ -1,9 +1,10 @@
-from models import Hashtag, HashtagCreate, HashtagUpdate
+from models import Hashtag, HashtagCreate, HashtagUpdate, HashtagListItem
 from services import HashtagService
 from api.v1.depedencies import get_hashtag_service
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+from typing import List
 
 router = APIRouter()
 
@@ -18,6 +19,30 @@ async def create_hashtag(
         return JSONResponse(content=result[0], status_code=result[1])
     
     return result
+
+
+@router.get("/search_name", response_model=List[HashtagListItem])
+async def search_hashtag_by_name(
+    query: str,
+    service: HashtagService = Depends(get_hashtag_service)
+):
+    return await service.fuzzy_search_by_name(query)
+
+
+@router.post("/recommend", response_model=List[HashtagListItem])
+async def recommend_hashtags(
+    selected_tags: List[str],
+    service: HashtagService = Depends(get_hashtag_service)
+):
+    return await service.recommend_related_hashtags(selected_tags)
+
+
+@router.delete("/all")
+async def delete_all_hashtags(
+    service: HashtagService = Depends(get_hashtag_service)
+):
+    return await service.delete_all()
+
 
 
 @router.get("/{hashtag_id}", response_model=Hashtag)
@@ -65,10 +90,3 @@ async def delelte_hashtag(
         return JSONResponse(content=result[0], status_code=result[1])
     
     return result
-
-
-@router.delete("/all")
-async def delete_all_hashtags(
-    service: HashtagService = Depends(get_hashtag_service)
-):
-    return await service.delete_all()

@@ -1,8 +1,9 @@
 from core.config import settings
+from core.logging import logger
 from models import Hashtag, HashtagCreate, HashtagUpdate, HashtagListItem
 from utils.hashtag_normalization import normalize_hashtag
 from utils.hashatag_description import generate_hashtag_description
-from utils.embeddings import mock_embedding
+from utils.embeddings import mock_embedding, average_embeddings
 
 from elasticsearch import AsyncElasticsearch, NotFoundError, ConflictError
 from typing import List
@@ -80,6 +81,57 @@ class HashtagService:
             refresh=True  # ensures deletions are visible immediately
         )
         return {"message": "all hashtags deleted"}
+    
+    
+    async def fuzzy_search_by_name(self, query: str, size: int = 10) -> List[Hashtag]:
+        es_query = {
+            "match": {
+                "name": {
+                    "query": query,
+                    "fuzziness": "AUTO"
+                }
+            }
+        }
+        
+        result = await self.es.search(
+            index=self.index,
+            query=es_query,
+            size=size
+        )
+
+        return [
+            Hashtag(**hit["_source"])
+            for hit in result["hits"]["hits"]
+        ]
+    
+
+    async def recommend_related_hashtags(self, selected_tags: List[str], size: int = 10) -> List[Hashtag]:
+        if not selected_tags:
+            return []
+        
+        embeddings = await self.fetch_embeddings(selected_tags)
+        pooled_embedding = average_embeddings(embeddings)
+
+        es_query = {
+            "script_score": {
+                "query": {"match_all": {}},
+                "script": {
+                    "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
+                    "params": {"query_vector": pooled_embedding}
+                }
+            }
+        }
+
+        result = await self.es.search(
+            index=self.index,
+            query=es_query,
+            size=size
+        )
+
+        return [
+            Hashtag(**hit["_source"])
+            for hit in result["hits"]["hits"]
+        ]
         
 
     def create_hashtag_model(self, create_data: HashtagCreate) -> Hashtag:
@@ -98,5 +150,17 @@ class HashtagService:
             description=description,
             embedding=embedding
         )
+    
+
+    async def fetch_embeddings(self, tag_ids: List[str]) -> List[List[float]]:
+        embeddings = []
+        for tag_id in tag_ids:
+            try:
+                result = await self.es.get(index=self.index, id=tag_id)
+                embeddings.append(result["_source"]["embedding"])
+            except NotFoundError:
+                continue
+        return embeddings
+
 
     

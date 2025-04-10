@@ -2,9 +2,9 @@ from models.paper import Paper, PaperCreate, PaperUpdate, PaperSearchRequest
 from services import PaperService
 from api.v1.depedencies import get_paper_service
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from typing import Optional, List
+from typing import List
 
 router = APIRouter()
 
