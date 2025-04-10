@@ -31,3 +31,10 @@ class PaperUpdate(BaseModel):
     authors: Optional[List[str]] = None
     year: Optional[int] = None
     hashtags: Optional[List[str]] = None
+
+
+class PaperSearchRequest(BaseModel):
+    must: Optional[List[str]] = []
+    should: Optional[List[str]] = []
+    must_not: Optional[List[str]] = []
+    size: int = 20

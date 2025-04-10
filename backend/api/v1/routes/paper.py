@@ -1,9 +1,10 @@
-from models.paper import Paper, PaperCreate, PaperUpdate
+from models.paper import Paper, PaperCreate, PaperUpdate, PaperSearchRequest
 from services import PaperService
 from api.v1.depedencies import get_paper_service
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
+from typing import Optional, List
 
 router = APIRouter()
 
@@ -36,7 +37,7 @@ async def get_paper(
     return result
 
 
-@router.get("/")
+@router.get("/", response_model=List[Paper])
 async def list_papers(
     service: PaperService = Depends(get_paper_service)
 ):
@@ -76,5 +77,13 @@ async def delete_all_papers(
     service: PaperService = Depends(get_paper_service)
 ):
     return await service.delete_all()
+
+
+@router.post("/search", response_model=List[Paper])
+async def search_papers(
+    search_request: PaperSearchRequest,
+    service: PaperService = Depends(get_paper_service)
+):
+    return await service.search(search_request)
 
 

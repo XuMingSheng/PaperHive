@@ -41,5 +41,17 @@ services:
     ports:
       - "3000:80"  # Expose port 80 in the container to 3000 on the host
 
+  # ----------------------------------------
+  # 4. Database Dashboards
+  # ----------------------------------------
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.6.2
+    environment:
+      ELASTICSEARCH_HOSTS: "http://es:9200"
+    ports:
+      - "5601:5601"
+    depends_on:
+      - es
+
 volumes:
   esdata:

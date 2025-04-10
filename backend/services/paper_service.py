@@ -1,5 +1,6 @@
 from core.config import settings
-from models import Paper, PaperCreate, PaperUpdate
+from core.logging import logger
+from models import Paper, PaperCreate, PaperUpdate, PaperSearchRequest
 from utils.paper_id import generate_paper_id
 from utils.hashtag_normalization import normalize_hashtag
 
@@ -12,7 +13,7 @@ class PaperService:
         self.index = settings.es_paper_index
 
     async def create(self, create_data: PaperCreate):
-        invalid_tags = self.get_invalid_hashtags(create_data)
+        invalid_tags = await self.get_invalid_hashtags(create_data)
         if invalid_tags:
             return {"error": f"Unrecognized hashtags: {invalid_tags}"}, 400
         
@@ -83,6 +84,29 @@ class PaperService:
             refresh=True  # ensures deletions are visible immediately
         )
         return {"message": "all papers deleted"}
+    
+
+    async def search(self, search_request: PaperSearchRequest):
+        query = {
+            "bool": {
+                "must": [{"terms": {"hashtags": search_request.must}}] if search_request.must else [],
+                "should": [{"terms": {"hashtags": search_request.should}}] if search_request.should else [],
+                "must_not": [{"terms": {"hashtags": search_request.must_not}}] if search_request.must_not else []
+            }
+        }
+
+        logger.info(f"QUERY: {query}")
+
+        result = await self.es.search(
+            index=self.index,
+            query=query,
+            size=search_request.size
+        )
+
+        return [
+            Paper(**hit["_source"])
+            for hit in result["hits"]["hits"]
+        ]
          
     
     def create_paper_model(self, create_data: PaperCreate) -> Paper:
@@ -108,11 +132,11 @@ class PaperService:
     async def get_invalid_hashtags(self, paper: PaperCreate) -> bool:
         invalid_list = []
         for hashtag in paper.hashtags:
-            try: 
+            try:
                 hashtag = normalize_hashtag(hashtag)
                 await self.es.get(index=settings.es_hashtag_index, id=hashtag)
             except NotFoundError:
-                invalid_list.app(hashtag)
+                invalid_list.append(hashtag)
         return invalid_list
                  
 
