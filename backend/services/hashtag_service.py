@@ -1,5 +1,5 @@
 from core.config import settings
-from models import Hashtag, HashtagCreate, HashtagUpdate
+from models import Hashtag, HashtagCreate, HashtagUpdate, HashtagListItem
 from utils.hashtag_normalization import normalize_hashtag
 from utils.hashatag_description import generate_hashtag_description
 from utils.embeddings import mock_embedding
@@ -45,7 +45,7 @@ class HashtagService:
         )
 
         return [
-            Hashtag(**hit["_source"])
+            HashtagListItem(**hit["_source"])
             for hit in result["hits"]["hits"]
         ] 
         

@@ -20,3 +20,8 @@ class HashtagUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     embedding: Optional[List[float]] = None
+
+
+class HashtagListItem(BaseModel):
+    name: str
+    description: str

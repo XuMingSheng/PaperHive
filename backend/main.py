@@ -3,6 +3,7 @@ from db.elastic import get_elasticsearch
 from schemas.v1 import paper_index_mapping, hashtag_index_mapping
 from migrations.index_migration import is_new_mappings, init_index, migrate_index
 from api.v1.routes import paper, hashtag
+from utils.es_warmup import wait_for_es
 
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
     # --- Startup ---
     if settings.environment == "development":
         es = get_elasticsearch()
+        await wait_for_es(es)
         await init_or_migrate_indices(es)
 
     yield  # Yield control to the app
