@@ -34,13 +34,13 @@ const HashtagInput = ({label, items, setItems}) => {
       inputValue={inputValue}
       onInputChange={(e, newInput) => setInputValue(newInput)}
 
-      renderTags={(tagValue, getTagProps) =>
+      renderValue={(tagValue, getTagProps) =>
         tagValue.map((option, index) => (
           <Chip
             key={option}
             label={option}
             {...getTagProps({ index })}
-            sx={{ bgcolor: 'secondary.main', color: 'white' }}
+            sx={{ bgcolor: 'grey.800', color: 'primary.main', fontWeight: 'bold' }}
           />
         ))
       }

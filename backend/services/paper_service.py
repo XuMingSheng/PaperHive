@@ -88,7 +88,17 @@ class PaperService:
 
     async def search(self, search_request: PaperSearchRequest):
         es_bool_query = {
-            "must": [{"terms": {"hashtags": search_request.must}}] if search_request.must else [],
+            "must": [{
+                # "terms": {"hashtags": search_request.must}
+                "terms_set": {
+                    "hashtags": {
+                        "terms": search_request.must,
+                        "minimum_should_match_script": {
+                            "source": "params.num_terms"
+                        }
+                    }
+                }
+            }] if search_request.must else [],
             "should": [{"terms": {"hashtags": search_request.should}}] if search_request.should else [],
             "must_not": [{"terms": {"hashtags": search_request.must_not}}] if search_request.must_not else []
         }

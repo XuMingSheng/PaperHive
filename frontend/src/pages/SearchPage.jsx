@@ -53,8 +53,8 @@ const SearchPage = () => {
     try {
       const result = await searchPapers({
         query: query,
-        must: hashtagOr,
-        should: hashtagAnd,
+        must: hashtagAnd,
+        should: hashtagOr,
         must_not: hashtagNot,
       });
       setSearchResults(result);
@@ -69,24 +69,25 @@ const SearchPage = () => {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Container maxWidth="md" sx={{ pt: 4, pb: 6 }}>
+      <Container maxWidth="xl" sx={{ pt: 4, pb: 6 }}>
         <Typography variant="h4" align="center" gutterBottom>
           Hashtag-Based Paper Search
         </Typography>
 
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={8}>
-          <Box mb={3}>
-            <Typography variant="h6">Query</Typography>
-            <TextField
-              fullWidth
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              variant="outlined"
-              placeholder="Enter your query"
-            />
-          </Box>
+        <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
+          <Box sx={{ flex: 1 }}>
             
+            <Box mb={3}>
+              <Typography variant="h6">Query</Typography>
+              <TextField
+                fullWidth
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                variant="outlined"
+                placeholder="Enter your query"
+              />
+            </Box>
+
             <HashtagZone title="OR" items={hashtagOr} setItems={setHashtagOr} />
             <HashtagZone title="AND" items={hashtagAnd} setItems={setHashtagAnd} />
             <HashtagZone title="NOT" items={hashtagNot} setItems={setHashtagNot} />
@@ -119,11 +120,21 @@ const SearchPage = () => {
                 searchResults.map((paper) => <PaperResult key={paper.id} paper={paper} />)
               )}
             </Box>
-          </Grid>
-          <Grid item xs={12} md={4}>
-              <HashtagRecommend recommendations={recommendations} />
-          </Grid>
-        </Grid>
+            
+          </Box>
+          <Box
+            sx={{
+              width: '300px',
+              position: 'sticky',
+              top: '20px',
+              alignSelf: 'flex-start',
+              flexShrink: 0
+            }}
+          >
+            <HashtagRecommend recommendations={recommendations} />
+          </Box>
+          
+        </Box>
       </Container>
     </ThemeProvider>
   );
