@@ -1,5 +1,6 @@
 import json
 import requests
+from tqdm.auto import tqdm
 
 API_BASE = "http://localhost:8000/api/v1"
 
@@ -12,11 +13,14 @@ def load_data(file_path):
         return json.load(f)
 
 
-def create_hashtag(tag_name):
+def create_hashtag(tag_name, emb):
     res = requests.post(
         f"{API_BASE}/hashtags/",
         headers=HEADERS,
-        json={"name": tag_name}
+        json={
+            "name": tag_name,
+            "embedding": emb
+        }
     )
     if res.status_code not in [200, 201, 409]:
         print(f"Failed to create hashtag: {tag_name} | Status: {res.status_code}")
@@ -37,14 +41,22 @@ def create_paper(paper):
 
 
 def main():
-    data = load_data("../machine_learninig_500.json")
+    data = load_data("../machine_learning_100_v3.json")
+    embeddings = load_data("../hashtag_embeddings.json")
+    print(len(embeddings))
 
-    hashtag_set = set()
+    hashtag_cnt = {} 
+    for item in data:
+        hashtags = [tag.strip().lower() for tag in item["hashtags"].split(",")]
+        for tag in hashtags:
+            hashtag_cnt[tag] = hashtag_cnt.get(tag, 0) + 1
+
+    selected_hashtags = set([tag for tag, cnt in hashtag_cnt.items() if cnt > 1])
+
     papers = []
 
     for item in data:
-        hashtags = [tag.strip() for tag in item["hashtags"].split(",")]
-        hashtag_set.update(hashtags)
+        hashtags = [tag.strip().lower() for tag in item["hashtags"].split(",")]
 
         paper = {
             "arxiv_id": item["arxiv_id"],
@@ -53,19 +65,19 @@ def main():
             "abstract": item["abstract"],
             "year": item["year"],
             "authors": item["authors"],
-            "hashtags": hashtags
+            "hashtags": [tag for tag in hashtags if tag in selected_hashtags]
         }
 
         papers.append(paper)
 
     # Create hashtags first
     print("Uploading hashtags...")
-    for tag in sorted(hashtag_set):
-        create_hashtag(tag)
+    for tag in tqdm(selected_hashtags):
+        create_hashtag(tag_name=tag, emb=embeddings[tag])
 
     # Create papers
     print("\nUploading papers...")
-    for paper in papers:
+    for paper in tqdm(papers):
         create_paper(paper)
 
 

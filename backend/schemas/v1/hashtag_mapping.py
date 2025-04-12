@@ -1,3 +1,5 @@
+from core.config import settings
+
 hashtag_index_mapping = {
     "mappings": {
          "properties": {
@@ -5,7 +7,7 @@ hashtag_index_mapping = {
             "description": {"type": "text"},
             "embedding": {
                 "type": "dense_vector",
-                "dims": 768,
+                "dims": settings.hashtag_emb_dim,
                 "index": True,
                 "similarity": "cosine"
             }

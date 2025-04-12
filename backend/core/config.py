@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     es_paper_index: str = "papers"       # alias name
     es_hashtag_index: str = "hashtags"   # alias name
     
+    hashtag_emb_dim: int = 256
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding='utf-8'
