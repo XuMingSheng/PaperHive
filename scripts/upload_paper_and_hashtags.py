@@ -51,7 +51,9 @@ def main():
         for tag in hashtags:
             hashtag_cnt[tag] = hashtag_cnt.get(tag, 0) + 1
 
-    selected_hashtags = set([tag for tag, cnt in hashtag_cnt.items() if cnt > 1])
+    # selected_hashtags = set([tag for tag, cnt in hashtag_cnt.items() if cnt > 1]) 
+    selected_hashtags = set([tag for tag, cnt in hashtag_cnt.items()])
+
 
     papers = []
 

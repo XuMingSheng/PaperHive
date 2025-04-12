@@ -114,7 +114,13 @@ class HashtagService:
 
         es_query = {
             "script_score": {
-                "query": {"match_all": {}},
+                "query": {
+                    "bool": {
+                        "must_not": [
+                            {"terms": {"_id": selected_tags}}
+                        ]
+                    }
+                },
                 "script": {
                     "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
                     "params": {"query_vector": pooled_embedding}
