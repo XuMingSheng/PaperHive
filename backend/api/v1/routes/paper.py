@@ -9,6 +9,14 @@ from typing import List
 router = APIRouter()
 
 
+@router.post("/search", response_model=List[Paper])
+async def search_papers(
+    search_request: PaperSearchRequest,
+    service: PaperService = Depends(get_paper_service)
+):
+    return await service.search(search_request)
+
+
 @router.post("/", response_model=Paper)
 async def create_paper(
     create_data: PaperCreate, 
@@ -58,6 +66,13 @@ async def update_paper(
     return result
 
 
+@router.delete("/all")
+async def delete_all_papers(
+    service: PaperService = Depends(get_paper_service)
+):
+    return await service.delete_all()
+
+
 @router.delete("/{paper_id}")
 async def delete_paper(
     paper_id: str, 
@@ -70,20 +85,4 @@ async def delete_paper(
         return JSONResponse(content=result[0], status_code=result[1])
     
     return result
-
-
-@router.delete("/all")
-async def delete_all_papers(
-    service: PaperService = Depends(get_paper_service)
-):
-    return await service.delete_all()
-
-
-@router.post("/search", response_model=List[Paper])
-async def search_papers(
-    search_request: PaperSearchRequest,
-    service: PaperService = Depends(get_paper_service)
-):
-    return await service.search(search_request)
-
 
