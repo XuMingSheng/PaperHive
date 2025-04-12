@@ -37,7 +37,7 @@ class HashtagService:
             return {"error": "Hashtag not found"}, 404
         
     
-    async def find_all(self, size: int = 1000) -> List[Hashtag]:
+    async def find_all(self, size: int = 1000) -> List[HashtagListItem]:
         # size=1000 is the default max for Elasticsearch queries
         result = await self.es.search(
             index=self.index,
@@ -83,7 +83,7 @@ class HashtagService:
         return {"message": "all hashtags deleted"}
     
     
-    async def fuzzy_search_by_name(self, query: str, size: int = 10) -> List[Hashtag]:
+    async def fuzzy_search_by_name(self, query: str, size: int = 10) -> List[HashtagListItem]:
         es_query = {
             "match": {
                 "name": {
@@ -100,7 +100,7 @@ class HashtagService:
         )
 
         return [
-            Hashtag(**hit["_source"])
+            HashtagListItem(**hit["_source"])
             for hit in result["hits"]["hits"]
         ]
     
@@ -129,7 +129,7 @@ class HashtagService:
         )
 
         return [
-            Hashtag(**hit["_source"])
+            HashtagListItem(**hit["_source"])
             for hit in result["hits"]["hits"]
         ]
         

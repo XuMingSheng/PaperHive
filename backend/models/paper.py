@@ -34,6 +34,7 @@ class PaperUpdate(BaseModel):
 
 
 class PaperSearchRequest(BaseModel):
+    query: Optional[str] = None
     must: Optional[List[str]] = []
     should: Optional[List[str]] = []
     must_not: Optional[List[str]] = []

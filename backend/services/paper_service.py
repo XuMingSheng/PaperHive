@@ -87,17 +87,43 @@ class PaperService:
     
 
     async def search(self, search_request: PaperSearchRequest):
-        query = {
-            "bool": {
-                "must": [{"terms": {"hashtags": search_request.must}}] if search_request.must else [],
-                "should": [{"terms": {"hashtags": search_request.should}}] if search_request.should else [],
-                "must_not": [{"terms": {"hashtags": search_request.must_not}}] if search_request.must_not else []
+        es_bool_query = {
+            "must": [{"terms": {"hashtags": search_request.must}}] if search_request.must else [],
+            "should": [{"terms": {"hashtags": search_request.should}}] if search_request.should else [],
+            "must_not": [{"terms": {"hashtags": search_request.must_not}}] if search_request.must_not else []
+        }
+        
+        if search_request.query:
+            es_bool_query["should"].append({
+                "multi_match": {
+                    "query": search_request.query,
+                    "fields": ["title^3", "abstract"],  # Boost title higher
+                    "fuzziness": "AUTO"
+                }
+            })
+
+        es_query = {
+            "function_score": {
+                "query": {
+                    "bool": es_bool_query
+                },
+                "boost_mode": "sum",
+                "score_mode": "sum",
+                "functions": [
+                    {
+                        "field_value_factor": {
+                            "field": "year",
+                            "factor": 1,
+                            "missing": 2000
+                        }
+                    }
+                ]
             }
         }
 
         result = await self.es.search(
             index=self.index,
-            query=query,
+            query=es_query,
             size=search_request.size
         )
 

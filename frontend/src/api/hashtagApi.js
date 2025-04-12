@@ -1,0 +1,27 @@
+const API_URL = import.meta.env.VITE_API_URL;
+
+export const fetchAutocomplete = async (input) => {
+    if (!input) return [];
+  
+    const res = await fetch(
+      `${API_URL}/api/v1/hashtags/search_name?query=${encodeURIComponent(input)}`
+    );
+  
+    if (!res.ok) throw new Error("Failed to fetch suggestions");
+  
+    const suggestions = await res.json();
+    return suggestions.map((s) => s.name);
+};
+
+
+export const fetchRecommendations = async (selectedTags) => {
+  const res = await fetch(`${API_URL}/api/v1/hashtags/recommend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(selectedTags),
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch hashtag recommendations");
+
+  return await res.json();
+};
