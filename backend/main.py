@@ -6,6 +6,7 @@ from api.v1.routes import paper, hashtag
 from utils.es_warmup import wait_for_es
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from typing import Dict
 
@@ -45,6 +46,14 @@ async def lifespan(app: FastAPI):
             await es.close()
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # ✅ 加入前端的開發位址
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
