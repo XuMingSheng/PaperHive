@@ -141,7 +141,7 @@ class HashtagService:
         
 
     def create_hashtag_model(self, create_data: HashtagCreate) -> Hashtag:
-        hashtag_id = normalize_hashtag(create_data.name)
+        name_normalized = normalize_hashtag(create_data.name)
 
         # Fallback to generated description if none provided
         description = create_data.description or generate_hashtag_description(create_data.name)
@@ -151,8 +151,8 @@ class HashtagService:
         embedding = create_data.embedding or mock_embedding(text_for_embedding)
 
         return Hashtag(
-            id=hashtag_id,
-            name=create_data.name,
+            id=name_normalized,
+            name=name_normalized,
             description=description,
             embedding=embedding
         )

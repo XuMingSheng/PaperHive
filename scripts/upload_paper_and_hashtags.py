@@ -42,12 +42,13 @@ def create_paper(paper):
 
 def main():
     data = load_data("../machine_learning_100_v3.json")
-    embeddings = load_data("../hashtag_embeddings.json")
-    print(len(embeddings))
+    embeddings = load_data("../hashtag_embeddings.new.json")
 
     hashtag_cnt = {} 
     for item in data:
-        hashtags = [tag.strip().lower() for tag in item["hashtags"].split(",")]
+        hashtags = [tag.strip() for tag in item["hashtags"].split(",")]
+        item["hashtags"] = hashtags
+        
         for tag in hashtags:
             hashtag_cnt[tag] = hashtag_cnt.get(tag, 0) + 1
 
@@ -58,8 +59,6 @@ def main():
     papers = []
 
     for item in data:
-        hashtags = [tag.strip().lower() for tag in item["hashtags"].split(",")]
-
         paper = {
             "arxiv_id": item["arxiv_id"],
             "doi": item["doi"],
@@ -67,7 +66,7 @@ def main():
             "abstract": item["abstract"],
             "year": item["year"],
             "authors": item["authors"],
-            "hashtags": [tag for tag in hashtags if tag in selected_hashtags]
+            "hashtags": [tag for tag in item["hashtags"] if tag in selected_hashtags]
         }
 
         papers.append(paper)
