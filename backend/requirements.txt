@@ -6,3 +6,4 @@ uvicorn
 pytest
 pytest-asyncio
 requests
+openai==1.75.0

@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     es_hashtag_index: str = "hashtags"   # alias name
     
     hashtag_emb_dim: int = 256
+
+    openai_api_key: str = ""
  
     model_config = SettingsConfigDict(
         env_file=".env",
