@@ -2,7 +2,7 @@ from core.config import settings
 from core.logging import logger
 from models import Hashtag, HashtagCreate, HashtagUpdate, HashtagListItem
 from utils.hashtag_normalization import normalize_hashtag
-from utils.hashatag_description import generate_hashtag_description
+from utils.hashatag_description import placeholder_hashtag_description
 from utils.embeddings import mock_embedding, average_embeddings
 
 from elasticsearch import AsyncElasticsearch, NotFoundError, ConflictError
@@ -144,7 +144,7 @@ class HashtagService:
         name_normalized = normalize_hashtag(create_data.name)
 
         # Fallback to generated description if none provided
-        description = create_data.description or generate_hashtag_description(create_data.name)
+        description = create_data.description or placeholder_hashtag_description(create_data.name)
 
         # Fallback to generated embedding if none provided
         text_for_embedding = f"{create_data.name}: {description}"
