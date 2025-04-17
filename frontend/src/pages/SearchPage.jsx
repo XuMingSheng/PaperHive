@@ -128,7 +128,10 @@ const SearchPage = () => {
               position: 'sticky',
               top: '20px',
               alignSelf: 'flex-start',
-              flexShrink: 0
+              flexShrink: 0,
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              pr: 1  // optional: add right padding to avoid scroll bar overlay
             }}
           >
             <HashtagRecommend recommendations={recommendations} />
