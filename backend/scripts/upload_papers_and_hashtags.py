@@ -5,7 +5,7 @@ from pathlib import Path
 from tqdm.auto import tqdm
 
 ####
-# To run this script: `PYTHONPATH=./backend python backend/scripts/upload_papers_and_hashtags.py`
+# To run this script at the project root: `$PYTHONPATH=./backend python backend/scripts/upload_papers_and_hashtags.py`
 ####
 
 API_BASE = "http://localhost:8000/api/v1"

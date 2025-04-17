@@ -6,7 +6,7 @@ from pathlib import Path
 import time
 
 ####
-# To run this script: `PYTHONPATH=./backend python backend/scripts/generate_hashtag_descriptions.py`
+# To run this script at the project root: `PYTHONPATH=./backend python backend/scripts/generate_hashtag_descriptions.py`
 ####
 
 def generate_all_descriptions(tag_list):
@@ -22,8 +22,8 @@ if __name__ == "__main__":
     backend_dir_path = Path(__file__).resolve().parent.parent
     data_dir_path = backend_dir_path.parent.parent / "data_cache"
     
-    papers_path = data_dir_path / "machine_learning_100_v3.json"
-    saving_path = data_dir_path / "machine_learning_100_v3_tag_desc.json"
+    papers_path = data_dir_path / "quantum_500.json.json"
+    saving_path = data_dir_path / "quantum_500.json_tag_desc.json"
     
     papers = load_json(papers_path)
     all_tags = []
