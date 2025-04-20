@@ -1,5 +1,16 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+export const fetchHashtag = async (tag) => {
+    const res = await fetch(
+      `${API_URL}/api/v1/hashtags/${tag}`
+    )
+    
+    if (!res.ok) throw new Error("Failed to fetch tag");
+    
+    return await res.json()
+}; 
+
+
 export const fetchAutocomplete = async (input) => {
     if (!input) return [];
   
@@ -37,4 +48,4 @@ export const fetchGraph = async (tags) => {
   if (!res.ok) throw new Error("Failed to fetch hashtag graph");
   
   return await res.json();
-}
+};

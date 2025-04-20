@@ -14,12 +14,8 @@ export const useHashtagRecommend = (hashtagOr, hashagAnd, hashtagNot) => {
           return;
         }
         
-        try {
-          const recs = await fetchRecommendations(selectedTags);
-          setRecommendations(recs);
-        } catch(err) {
-          console.error("Failed to fetch recommendations:", err);
-        }
+        const recs = await fetchRecommendations(selectedTags);
+        setRecommendations(recs);
       };
       
       fetchRecs();

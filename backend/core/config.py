@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     hashtag_emb_dim: int = 256
     default_graph_steps: int = 2
-    default_graph_top_n: int = 20
+    default_graph_top_n: int = 10
 
     openai_api_key: str = ""
  

@@ -174,48 +174,49 @@ class HashtagService:
         for _ in range(steps):
             if not queue:
                 break
+            next_queue = []
             
-            es_resp = await self.es.search(
-                index=settings.es_hashtag_relations_index,
-                size=settings.default_graph_top_n,
-                query={
-                    "bool": {
-                        "should": [
-                            {"terms": {"src": queue}},
-                            {"terms": {"dst": queue}},
-                        ]
-                    }
-                },
-                sort=[
-                    {"paper_cnt_total": {"order": "desc"}}
-                ]
-            )
-      
-            queue = []
-            
-            for hit in es_resp["hits"]["hits"]:
-                relation = hit["_source"]
-                src = relation["src"]
-                dst = relation["dst"]
-                total_cnt = relation.get("paper_cnt_total", 1)
-                cnt_by_year = relation.get("paper_cnt_by_year", {})
-                cnt_by_year = {year: cnt for year, cnt in cnt_by_year.items() if cnt is not None}
-                weight = total_cnt
+            for tag in queue:
+                es_resp = await self.es.search(
+                    index=settings.es_hashtag_relations_index,
+                    size=settings.default_graph_top_n,
+                    query={
+                        "bool": {
+                            "should": [
+                                {"terms": {"src": [tag]}},
+                                {"terms": {"dst": [tag]}},
+                            ]
+                        }
+                    },
+                    sort=[
+                        {"paper_cnt_total": {"order": "desc"}}
+                    ]
+                )
                 
-                if (src, dst) not in seen_edges:
-                    seen_edges.add((src, dst))
-                    edges.append(HashtagEdge(
-                        src=src, 
-                        dst=dst,
-                        weight=weight,
-                        total_cnt=total_cnt, 
-                        cnt_by_year=cnt_by_year
-                    ))
+                for hit in es_resp["hits"]["hits"]:
+                    relation = hit["_source"]
+                    src = relation["src"]
+                    dst = relation["dst"]
+                    total_cnt = relation.get("paper_cnt_total", 1)
+                    cnt_by_year = relation.get("paper_cnt_by_year", {})
+                    cnt_by_year = {year: cnt for year, cnt in cnt_by_year.items() if cnt is not None}
+                    weight = total_cnt
+                    
+                    if (src, dst) not in seen_edges:
+                        seen_edges.add((src, dst))
+                        edges.append(HashtagEdge(
+                            src=src, 
+                            dst=dst,
+                            weight=weight,
+                            total_cnt=total_cnt, 
+                            cnt_by_year=cnt_by_year
+                        ))
 
-                for tag in [src, dst]:
-                    if tag not in seen_tags:
-                        seen_tags.add(tag)
-                        queue.append(tag)
+                    for tag in [src, dst]:
+                        if tag not in seen_tags:
+                            seen_tags.add(tag)
+                            next_queue.append(tag)
+            queue = next_queue
                         
         return HashtagGraph(nodes=list(seen_tags), edges=edges)
             
