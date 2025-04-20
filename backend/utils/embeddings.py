@@ -2,8 +2,12 @@ from core.config import settings
 import random
 from typing import List
 
-def mock_embedding(text: str, dim: int = settings.hashtag_emb_dim) -> list[float]:
+def mock_embedding(tag: str, dim: int = settings.hashtag_emb_dim) -> list[float]:
     return [random.uniform(-1, 1) for _ in range(dim)]
+
+
+def generate_hashtag_embeddings(tag: str, dim: int = settings.hashtag_emb_dim) -> list[float]:
+    return mock_embedding(tag, dim)
 
 
 def average_embeddings(embeddings: List[List[float]]) -> List[float]:

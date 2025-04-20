@@ -25,3 +25,16 @@ export const fetchRecommendations = async (selectedTags) => {
 
   return await res.json();
 };
+
+
+export const fetchGraph = async (tags) => {
+  const res = await fetch(`${API_URL}/api/v1/hashtags/graph`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tags)
+  });
+
+  if (!res.ok) throw new Error("Failed to fetch hashtag graph");
+  
+  return await res.json();
+}

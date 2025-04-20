@@ -1,2 +1,2 @@
 from .paper import *
-from .hasttag import *
+from .hashtag import *

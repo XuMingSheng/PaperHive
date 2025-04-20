@@ -1,4 +1,4 @@
-# from core.config import settings
+from core.config import settings
 import openai
 
 def placeholder_hashtag_description(tag: str):
@@ -6,8 +6,7 @@ def placeholder_hashtag_description(tag: str):
 
 
 def generate_hashtag_description(tag: str):
-    # client = openai.OpenAI(api_key=settings.openai_api_key)
-    client = openai.OpenAI(api_key="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")
+    client = openai.OpenAI(api_key=settings.openai_api_key)
     
     prompt = f"""
     Describe the following research terms in one short, informative sentence.

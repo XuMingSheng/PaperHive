@@ -3,6 +3,7 @@ from core.logging import logger
 from models import Paper, PaperCreate, PaperUpdate, PaperSearchRequest
 from utils.paper_id import generate_paper_id
 from utils.hashtag_normalization import normalize_hashtag
+from utils.hashtag_relations_update import  build_tag_pairs, update_hashtag_relations
 
 from elasticsearch import AsyncElasticsearch, NotFoundError, ConflictError
 from typing import List
@@ -25,6 +26,9 @@ class PaperService:
                 id=paper.id,
                 document=paper.model_dump(exclude_unset=True)
             )
+
+            tag_pairs = build_tag_pairs(paper.hashtags)
+            await update_hashtag_relations(self.es, tag_pairs, delta=1, year=paper.year)
 
         except ConflictError:
             return {"error": "Paper already exists"}, 409
@@ -56,14 +60,23 @@ class PaperService:
 
     async def update(self, paper_id: str, updated_data: PaperUpdate):
         try:
+            old_paper = await self.get(paper_id)
+            
+            if updated_data.hashtags:
+                updated_data.hashtags = [normalize_hashtag(tag) for tag in updated_data.hashtag]
+            
             await self.es.update(
                 index=self.index, 
                 id=paper_id, 
                 body={"doc": updated_data.model_dump(exclude_unset=True)}
             )
             
-            result = await self.es.get(index=self.index, id=paper_id)
-            return result
+            updated_paper = await self.get(paper_id)
+            
+            if updated_data.hashtags:
+                self.update_hashtag_relations(old_paper, updated_paper)
+
+            return updated_paper
         
         except NotFoundError:
             return {"error": "Paper not found"}, 404
@@ -71,18 +84,33 @@ class PaperService:
 
     async def delete(self, paper_id: str):
         try:
+            paper = self.get(paper_id)
+            
             await self.es.delete(index=self.index, id=paper_id)
+            
+            tag_pairs = build_tag_pairs(paper.hashtags)
+            await update_hashtag_relations(self.es, tag_pairs, delta=-1, year=paper.year)
+            
             return {"message": "deleted"}
         except NotFoundError:
             return {"error": "Paper not found"}, 404
         
     
     async def delete_all(self):
+        # Delete all papers
         await self.es.delete_by_query(
             index=self.index,
             body={"query": {"match_all": {}}},
             refresh=True  # ensures deletions are visible immediately
         )
+
+        # Delete all hashtag co-occurrence relations
+        await self.es.delete_by_query(
+            index=settings.es_hashtag_relations_index,
+            body={"query": {"match_all": {}}},
+            refresh=True
+        )
+        
         return {"message": "all papers deleted"}
     
 
@@ -172,7 +200,23 @@ class PaperService:
             except NotFoundError:
                 invalid_list.append(hashtag)
         return invalid_list
-                 
+    
+    
+    async def update_hashtag_relations(self, old_paper: Paper, updated_paper: Paper):
+        old_tag_pairs =  old_tag_pairs = build_tag_pairs(old_paper.hashtags)
+        new_tag_pairs = build_tag_pairs(updated_paper.hashtags)
+        
+        if old_paper.year == updated_paper.year:
+            removed = set(old_tag_pairs) - set(new_tag_pairs)
+            added = set(new_tag_pairs) - set(old_tag_pairs)
+            
+            if removed:
+                await update_hashtag_relations(self.es, list(removed), delta=-1, year=updated_paper.year)
+            if added:
+                await update_hashtag_relations(self.es, list(added), delta=1, year=updated_paper.year)
+        else:
+            await update_hashtag_relations(self.es, list(old_tag_pairs), delta=-1, year=old_paper.year)
+            await update_hashtag_relations(self.es, list(new_tag_pairs), delta=+1, year=new_tag_pairs)
 
         
         

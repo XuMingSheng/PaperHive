@@ -25,3 +25,14 @@ class HashtagUpdate(BaseModel):
 class HashtagListItem(BaseModel):
     name: str
     description: str
+
+
+class HashtagEdge(BaseModel):
+    src: str
+    dst: str
+    weight: Optional[int] = 1
+
+
+class HashtagGraph(BaseModel):
+    nodes: List[str]
+    edges: List[HashtagEdge]
