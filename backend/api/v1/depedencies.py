@@ -1,4 +1,4 @@
-from services import PaperService, HashtagService
+from services import PaperService, HashtagService, PdfService
 from db.elastic import get_elasticsearch
 
 def get_paper_service() -> PaperService:
@@ -9,4 +9,6 @@ def get_hashtag_service() -> HashtagService:
     es = get_elasticsearch()
     return HashtagService(es)
 
-    
+def get_pdf_service() -> PdfService:
+    es = get_elasticsearch()
+    return PdfService(es)

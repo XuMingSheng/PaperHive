@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Container, Typography, Button, CssBaseline, CircularProgress, TextField, Box, Grid} from "@mui/material";
+import { Container, Typography, Button, CssBaseline, CircularProgress, TextField, Box, InputAdornment, IconButton} from "@mui/material";
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 import HashtagZone from "../components/HashtagZone";
@@ -7,6 +9,7 @@ import HashtagRecommend from "../components/HashtagRecommend";
 import PaperResult from "../components/PaperResult";
 import { searchPapers } from "../api/paperApi";
 import { fetchRecommendations  } from "../api/hashtagApi";
+import { parsePdf } from "../api/pdfApi";
 
 const darkTheme = createTheme({
   palette: { mode: "dark" }
@@ -20,6 +23,7 @@ const SearchPage = () => {
   const [recommendations, setRecommendations] = useState([]);
 
   const [query, setQuery] = useState("");
+  const [pdfFile, setPdfFile] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false)
@@ -66,6 +70,25 @@ const SearchPage = () => {
     }
   };
 
+  const handlePdfUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file || file.type !== "application/pdf") {
+      alert("Please upload a valid PDF file.");
+      return;
+    }
+
+    try {
+        const praseResult = await parsePdf(file); // praseResult = { title, hashtags }
+        console.log(praseResult);
+        setQuery(praseResult.title);
+        setHashtagOr(praseResult.hashtags);
+    } catch(err) {
+        console.error("Failed to upload PDF:", err);
+    }
+
+    setPdfFile(file);
+  };
+
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
@@ -84,7 +107,22 @@ const SearchPage = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 variant="outlined"
-                placeholder="Enter your query"
+                placeholder="Enter your query or upload a PDF"
+                InputProps={{     
+                    endAdornment: (
+                      <InputAdornment position="end">  
+                        <IconButton component="label"> 
+                          <UploadFileIcon />           
+                          <input                      
+                            type="file"
+                            hidden
+                            accept="application/pdf"
+                            onChange={handlePdfUpload}
+                          />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
               />
             </Box>
 

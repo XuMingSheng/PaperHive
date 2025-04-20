@@ -1,8 +1,8 @@
 from models import Hashtag, HashtagCreate, HashtagUpdate, HashtagListItem
-from services import HashtagService
-from api.v1.depedencies import get_hashtag_service
+from services import HashtagService, PdfService
+from api.v1.depedencies import get_hashtag_service, get_pdf_service
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from fastapi.responses import JSONResponse
 from typing import List
 
@@ -86,6 +86,24 @@ async def delelte_hashtag(
 ):
     result = await service.delete(hashtag_id)
     
+    if isinstance(result, tuple):
+        return JSONResponse(content=result[0], status_code=result[1])
+    
+    return result
+
+
+
+@router.post("/parse_pdf")
+async def parse_pdf_from_file(
+    file: UploadFile = File(...),
+    service: PdfService = Depends(get_pdf_service)
+):
+    if file.content_type != "application/pdf":
+        return JSONResponse(status_code=400, content={"error": "Invalid file type"})
+
+    contents = await file.read()
+    result = await service.extract_pdf_info(contents)
+
     if isinstance(result, tuple):
         return JSONResponse(content=result[0], status_code=result[1])
     
