@@ -52,21 +52,51 @@ const SearchPage = () => {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Container maxWidth="xl" sx={{ pt: 4, pb: 6 }}>
-        <Typography variant="h4" align="center" gutterBottom>
-          Hashtag-Based Paper Search
-        </Typography>
+      {/* Title center block */}
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{ textAlign: 'center', mt: 4 }}
+      >
+        Hashtag-Based Paper Search
+      </Typography>
 
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center',  
-          alignItems: 'flex-start',
-          gap: 4,
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%',
+          minHeight: '100vh',
           px: 2,
-          pt: 6,
-        }}>
+          py: 6,
+        }}
+      >
+
+        {/* Centered dynamic content wrapper */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            width: '100%',
+            maxWidth: '1200px',
+            flexDirection: {
+              xs: 'column', // stack on small screens
+              md: 'row',
+            },
+            gap: 4,
+          }}
+        >
           {/* Left: Search panel */}
-          <Box sx={{ flex: 1, maxWidth: '900px' }}>
+          <Box 
+             sx={{
+              width: {
+                xs: '100%',
+                md: hasSearched ? 'calc(100% - 340px)' : '100%', // account for right panel
+              },
+              maxWidth: '900px',
+              flexGrow: 1,
+            }}
+          >
             {/* Search content */}
             <Box mb={3}>
               <Typography variant="h6">Query</Typography>
@@ -112,12 +142,18 @@ const SearchPage = () => {
               )}
             </Box>
           </Box>
-              
-          {/* Right: Recommendation panel */}
+
+          {/* Right: Graph & Recommendation panel */}
           <Box
             sx={{
-              width: '300px',
-              position: 'sticky',
+              width: {
+                xs: "100%",  // full width on mobile
+                md: "300px", // fixed on desktop
+              },
+              position: {
+                xs: "relative",
+                md: "sticky",
+              },
               top: '20px',
               alignSelf: 'flex-start',
               flexShrink: 0,
@@ -135,11 +171,11 @@ const SearchPage = () => {
                 <HashtagGraph tags={selectedTags} steps={2} />
               </>
             )}
-           
+          
             <HashtagRecommend recommendations={recommendations} />
           </Box>
         </Box>
-      </Container>
+      </Box>
     </ThemeProvider>
   );
 };
