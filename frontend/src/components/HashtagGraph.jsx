@@ -8,32 +8,16 @@ import { fetchGraph } from "../api/hashtagApi";
 const HashtagGraph = ({ tags, steps = 2 }) => {
   const [graphData, setGraphData] = useState({ nodes: [], links: []});
   const [expanded, setExpanded] = useState(false);
+  
   const containerRef = useRef();
-
-  useEffect(
-    ()=>{
-      if (tags.length == 0) return;
-      
-      fetchGraph(tags)
-        .then(data => {
-          const nodes = data.nodes.map(tag => ({id: tag}))
-          const links = data.edges.map(edge => ({
-            source: edge.src,
-            target: edge.dst,
-            value: edge.weight || 1,
-          }));
-          setGraphData({ nodes, links });
-        })
-    }, 
-    [tags, steps]
-  );
+  const graphRef = useRef();
 
   const maxWeight = useMemo(() => {
     if (!graphData.links || graphData.links.length === 0) return 1;
-    return Math.max(...graphData.links.map((link) => link.value || 1));
+    return Math.max(...graphData.links.map((link) => link.weight || 1));
   }, [graphData.links]);
 
-const renderGraph = (width, height) => (
+  const renderGraph = (width, height) => (
     <ForceGraph2D
       graphData={graphData}
       width={width}
@@ -69,19 +53,50 @@ const renderGraph = (width, height) => (
       }}
       
       // Edge config
-      linkWidth={(link) => Math.log(link.value || 1) + 1}
+      linkWidth={(link) => Math.log(link.weight || 1) + 1}
       linkColor={(link) => {
-        const weight = link.value || 1;
+        const weight = link.weight || 1;
         const intensity = Math.min(1, weight / maxWeight);  // scale to 0–1
         const r = Math.floor(255 * intensity);
         const g = Math.floor(255 * (1 - intensity));
         const b = 0;
         return `rgba(${r},${g},${b},0.8)`;  // yellow to red
       }}
-      linkLabel={(link) => `Weight: ${link.value}`}
+      linkLabel={(link) => {
+        const cnt_by_year = Object.entries(link.cnt_by_year)
+          .sort((a, b) => b[0] - a[0]) 
+          .map(([year, cnt]) => `${year}: ${cnt}`)
+          .join(" | ")
+        return `Total Papers: ${link.total_cnt} | ${cnt_by_year}`;
+      }}
       linkHoverPrecision={5}
     />
   );
+
+  useEffect(
+    ()=>{
+      if (tags.length == 0) return;
+      
+      fetchGraph(tags)
+        .then(data => {
+          const nodes = data.nodes.map(tag => ({id: tag}))
+          const links = data.edges.map(edge => ({
+            source: edge.src,
+            target: edge.dst,
+            weight: edge.weight || 1,
+            total_cnt: edge.total_cnt,
+            cnt_by_year: edge.cnt_by_year
+          }));
+          setGraphData({ nodes, links });
+        })
+    }, 
+    [tags, steps]
+  );
+
+  useEffect(() => {
+    if (!graphRef.current) return;
+    graphRef.current.d3Force("charge")?.strength(-250); // default ~ -30
+  }, [graphData]);
 
   return (
     <>

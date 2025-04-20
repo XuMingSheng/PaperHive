@@ -23,9 +23,9 @@ async def update_hashtag_relations(
                 "source": """
                     ctx._source.paper_cnt_total += params.delta;
                     if (ctx._source.paper_cnt_by_year.containsKey(params.year)) {
-                        ctx._source.paper_cnt_by_year[params.year] += params.count;
+                        ctx._source.paper_cnt_by_year[params.year] += params.delta;
                     } else {
-                        ctx._source.paper_cnt_by_year[params.year] = params.count;
+                        ctx._source.paper_cnt_by_year[params.year] = params.delta;
                     }
                 """,
                 "params": {"delta": delta, "year": str(year)},

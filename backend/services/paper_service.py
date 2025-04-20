@@ -74,7 +74,7 @@ class PaperService:
             updated_paper = await self.get(paper_id)
             
             if updated_data.hashtags:
-                self.update_hashtag_relations(old_paper, updated_paper)
+                await self.update_hashtag_relations(old_paper, updated_paper)
 
             return updated_paper
         
