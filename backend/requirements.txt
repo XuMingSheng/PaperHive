@@ -10,4 +10,3 @@ openai==1.75.0
 PyPDF2
 python-multipart
 pymupdf
-openai

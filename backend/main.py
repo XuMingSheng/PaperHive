@@ -1,14 +1,18 @@
 from core.config import settings
 from db.elastic import get_elasticsearch
-from schemas.v1 import paper_index_mapping, hashtag_index_mapping
-from migrations.index_migration import is_new_mappings, init_index, migrate_index
+from schemas.v1 import (
+    paper_index_mapping, 
+    hashtag_index_mapping,
+    hashtag_relations_index_mapping
+)
+from migrations.index_migration import init_index, migrate_index
 from api.v1.routes import paper, hashtag
 from utils.es_warmup import wait_for_es
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from typing import Dict
+
 
 async def init_or_migrate_indices(es):
     indices = [
@@ -19,6 +23,10 @@ async def init_or_migrate_indices(es):
         {
             "alias": settings.es_hashtag_index,
             "schema": hashtag_index_mapping 
+        },
+        {
+            "alias": settings.es_hashtag_relations_index,
+            "schema": hashtag_relations_index_mapping
         }
     ]
     version = "1"
@@ -28,6 +36,7 @@ async def init_or_migrate_indices(es):
         schema = index["schema"]
         await init_index(es=es, version=version, alias=alias, schema=schema)
         await migrate_index(es=es, version=version, alias=alias, schema=schema, delete_old=True)
+        
     
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,6 +53,7 @@ async def lifespan(app: FastAPI):
         es = get_elasticsearch()
         if es:
             await es.close()
+
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 

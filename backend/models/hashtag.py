@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from uuid import uuid4
 
 
@@ -25,3 +25,16 @@ class HashtagUpdate(BaseModel):
 class HashtagListItem(BaseModel):
     name: str
     description: str
+
+
+class HashtagEdge(BaseModel):
+    src: str
+    dst: str
+    weight: int
+    total_cnt: int
+    cnt_by_year: Dict[str, int]
+
+
+class HashtagGraph(BaseModel):
+    nodes: List[str]
+    edges: List[HashtagEdge]

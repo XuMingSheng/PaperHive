@@ -8,6 +8,26 @@ from typing import List
 
 router = APIRouter()
 
+@router.get("/{paper_id}", response_model=Paper)
+async def get_paper(
+    paper_id: str, 
+    service: PaperService = Depends(get_paper_service)
+):
+    result = await service.get(paper_id)
+
+     
+    if isinstance(result, tuple):
+        return JSONResponse(content=result[0], status_code=result[1])
+    
+    return result
+
+
+@router.get("/", response_model=List[Paper])
+async def list_papers(
+    service: PaperService = Depends(get_paper_service)
+):
+    return await service.find_all()
+
 
 @router.post("/search", response_model=List[Paper])
 async def search_papers(
@@ -28,28 +48,6 @@ async def create_paper(
         return JSONResponse(content=result[0], status_code=result[1])
      
     return result
-
-
-
-@router.get("/{paper_id}", response_model=Paper)
-async def get_paper(
-    paper_id: str, 
-    service: PaperService = Depends(get_paper_service)
-):
-    result = await service.get(paper_id)
-
-     
-    if isinstance(result, tuple):
-        return JSONResponse(content=result[0], status_code=result[1])
-    
-    return result
-
-
-@router.get("/", response_model=List[Paper])
-async def list_papers(
-    service: PaperService = Depends(get_paper_service)
-):
-    return await service.find_all()
 
 
 @router.patch("/{paper_id}", response_model=Paper)

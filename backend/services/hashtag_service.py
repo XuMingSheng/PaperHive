@@ -1,12 +1,19 @@
 from core.config import settings
 from core.logging import logger
-from models import Hashtag, HashtagCreate, HashtagUpdate, HashtagListItem
+from models import (
+    Hashtag, 
+    HashtagCreate, 
+    HashtagUpdate, 
+    HashtagListItem,
+    HashtagEdge,
+    HashtagGraph
+)
 from utils.hashtag_normalization import normalize_hashtag
-from utils.hashatag_description import placeholder_hashtag_description
-from utils.embeddings import mock_embedding, average_embeddings
+from utils.hashatag_description import generate_hashtag_description
+from utils.embeddings import generate_hashtag_embeddings, average_embeddings
 
 from elasticsearch import AsyncElasticsearch, NotFoundError, ConflictError
-from typing import List
+from typing import List, Optional
 
 
 class HashtagService:
@@ -68,18 +75,35 @@ class HashtagService:
 
     async def delete(self, hashtag_id: str):
         try:
+            # Delete the hashtag itself
             await self.es.delete(index=self.index, id=hashtag_id)
+            
+            # Delete all edges where it's src or dst
+            await self.delete_relations(hashtag_id=hashtag_id)
+            
+            # Remove hashtag from all papers
+            await self.delete_from_papers(hashtag_id=hashtag_id)
+        
             return {"message": "deleted"}
+        
         except NotFoundError:
             return {"error": "Hashtag not found"}, 404  
         
 
     async def delete_all(self):
+        # Delete all hashtags
         await self.es.delete_by_query(
             index=self.index,
             body={"query": {"match_all": {}}},
             refresh=True  # ensures deletions are visible immediately
         )
+
+        # Delete all hashtag relations
+        await self.delete_relations()
+        
+        # Remove all hashtags from every paper
+        await self.delete_from_papers()
+        
         return {"message": "all hashtags deleted"}
     
     
@@ -140,15 +164,72 @@ class HashtagService:
         ]
         
 
+    async def expand_graph(self, start_tags: List[str], steps: int=settings.default_graph_steps) -> HashtagGraph:
+        seen_tags = set(start_tags)
+        seen_edges = set()
+        queue = list(start_tags)
+        edges = []
+
+        # BFS
+        for _ in range(steps):
+            if not queue:
+                break
+            next_queue = []
+            
+            for tag in queue:
+                es_resp = await self.es.search(
+                    index=settings.es_hashtag_relations_index,
+                    size=settings.default_graph_top_n,
+                    query={
+                        "bool": {
+                            "should": [
+                                {"terms": {"src": [tag]}},
+                                {"terms": {"dst": [tag]}},
+                            ]
+                        }
+                    },
+                    sort=[
+                        {"paper_cnt_total": {"order": "desc"}}
+                    ]
+                )
+                
+                for hit in es_resp["hits"]["hits"]:
+                    relation = hit["_source"]
+                    src = relation["src"]
+                    dst = relation["dst"]
+                    total_cnt = relation.get("paper_cnt_total", 1)
+                    cnt_by_year = relation.get("paper_cnt_by_year", {})
+                    cnt_by_year = {year: cnt for year, cnt in cnt_by_year.items() if cnt is not None}
+                    weight = total_cnt
+                    
+                    if (src, dst) not in seen_edges:
+                        seen_edges.add((src, dst))
+                        edges.append(HashtagEdge(
+                            src=src, 
+                            dst=dst,
+                            weight=weight,
+                            total_cnt=total_cnt, 
+                            cnt_by_year=cnt_by_year
+                        ))
+
+                    for tag in [src, dst]:
+                        if tag not in seen_tags:
+                            seen_tags.add(tag)
+                            next_queue.append(tag)
+            queue = next_queue
+                        
+        return HashtagGraph(nodes=list(seen_tags), edges=edges)
+            
+
     def create_hashtag_model(self, create_data: HashtagCreate) -> Hashtag:
         name_normalized = normalize_hashtag(create_data.name)
 
         # Fallback to generated description if none provided
-        description = create_data.description or placeholder_hashtag_description(create_data.name)
+        description = create_data.description or generate_hashtag_description(create_data.name)
 
         # Fallback to generated embedding if none provided
         text_for_embedding = f"{create_data.name}: {description}"
-        embedding = create_data.embedding or mock_embedding(text_for_embedding)
+        embedding = create_data.embedding or generate_hashtag_embeddings(text_for_embedding)
 
         return Hashtag(
             id=name_normalized,
@@ -167,6 +248,63 @@ class HashtagService:
             except NotFoundError:
                 continue
         return embeddings
-
+    
+    
+    async def delete_relations(self, hashtag_id: Optional[str]=None):
+        if hashtag_id:
+            await self.es.delete_by_query(
+                index=settings.es_hashtag_relations_index,
+                body={
+                    "query": {
+                        "bool": {
+                            "should": [
+                                {"term": {"src": hashtag_id}},
+                                {"term": {"dst": hashtag_id}}
+                            ]
+                        }
+                    }
+                },
+                refresh=True
+            )
+        else:
+            await self.es.delete_by_query(
+                index=settings.es_hashtag_relations_index,
+                body={"query": {"match_all": {}}},
+                refresh=True
+            )
 
     
+    async def delete_from_papers(self, hashtag_id: Optional[str]=None):
+        if hashtag_id: 
+            await self.es.update_by_query(
+                index=settings.es_paper_index,
+                body={
+                    "script": {
+                        "source": """
+                            if (ctx._source.hashtags != null) {
+                                ctx._source.hashtags.removeIf(h -> h == params.tag);
+                            }
+                        """,
+                        "lang": "painless",
+                        "params": {"tag": hashtag_id}
+                    },
+                    "query": {
+                        "term": {"hashtags": hashtag_id}
+                    }
+                },
+                refresh=True
+            )
+        else:
+            await self.es.update_by_query(
+                index=settings.es_paper_index,
+                body={
+                    "script": {
+                        "source": "ctx._source.hashtags = []",
+                        "lang": "painless"
+                    },
+                    "query": {
+                        "exists": {"field": "hashtags"}
+                    }
+                },
+                refresh=True
+            )

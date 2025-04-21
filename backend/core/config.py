@@ -10,8 +10,11 @@ class Settings(BaseSettings):
     es_hosts: List[str] = ["http://localhost:9200"]
     es_paper_index: str = "papers"       # alias name
     es_hashtag_index: str = "hashtags"   # alias name
+    es_hashtag_relations_index: str = "hashtag_relations" #alias name
     
     hashtag_emb_dim: int = 256
+    default_graph_steps: int = 2
+    default_graph_top_n: int = 10
 
     openai_api_key: str = ""
  
