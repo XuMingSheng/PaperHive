@@ -65,7 +65,7 @@ const HashtagGraph = ({ tags, steps = 2 }) => {
     graphData.nodes.forEach(node => g.addNode(node.id));
     graphData.links.forEach(link => {
       if (!g.hasEdge(link.source, link.target)) {
-        g.addEdge(link.source, link.target, { 
+        g.addEdge(link.source, link.target, {
           weight: link.weight || 1,
           total_cnt: link.total_cnt || 0,
           cnt_by_year: link.cnt_by_year || {}
@@ -178,7 +178,7 @@ const HashtagGraph = ({ tags, steps = 2 }) => {
           .sort((a, b) => b[0] - a[0]) 
           .map(([year, cnt]) => `${year}: ${cnt}`)
           .join(" | ")
-        return `[#${link.source}-#${link.source}] Total Papers: ${link.total_cnt} | ${cnt_by_year}`;
+        return `Total Papers: ${link.total_cnt} | ${cnt_by_year}`;
       }}
       linkHoverPrecision={5}
     />
