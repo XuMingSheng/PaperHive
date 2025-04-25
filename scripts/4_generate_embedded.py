@@ -1,8 +1,10 @@
 import json
 import openai
 
+OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+
 def get_embedding(text, model="text-embedding-3-small"):
-    openai.api_key = "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"  # Or use environment variable
+    openai.api_key = OPENAI_API_KEY
     return openai.embeddings.create(input=text, model=model, dimensions=256)
 
 # Load input file

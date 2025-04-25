@@ -13,6 +13,7 @@ import io
 import openai
 import re
 
+OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
 
 class PdfService:
     def __init__(self, es: AsyncElasticsearch):
@@ -80,7 +81,7 @@ class PdfService:
 
     async def generate_hashtags(self, abstract):
 
-        openai.api_key = "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"
+        openai.api_key = OPENAI_API_KEY
         prompt = '''
         Given the following abstract, give me 10 terms of topics or classification or keywords.
         7 of terms should be common, broad, general in papers and 3 are more specific to abstract,

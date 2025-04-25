@@ -2,9 +2,11 @@ import json
 import openai
 from collections import Counter
 
+OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+
 def generate_hashtags_description(hashtag):
 
-    openai.api_key = "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"
+    openai.api_key = OPENAI_API_KEY
     prompt = '''
     Given this term, give me a short description of it. no more than a paragraph. The term is : 
     '''
