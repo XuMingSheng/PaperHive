@@ -41,7 +41,7 @@ Please **replace or configure your OpenAI API key** before running these files.
 
 To properly run the backend and frontend, please make sure the environment is configured correctly.
 
-Create a `.env` file inside the `backend/` directory and add the following environment variables:
+Create a `.env` file inside the `frontend/` directory and add the following environment variables:
 
 ```VITE_API_URL=http://localhost:8000```
 
